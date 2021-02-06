@@ -1,0 +1,34 @@
+{% extends "network/layout.html" %}
+{% load static %}
+
+{% block script %}
+    <script src="{% static 'network/index.js' %}"></script>
+{% endblock %}
+
+{% block body %}
+    <div id="profile-view">
+        <div id="user-info"></div>
+        <div id="user-posts"></div>
+    </div>
+
+
+    <div id="new_post_view">        
+        <h3>New Post</h3>
+        <form id="post-form" action="{% url 'create' %}" method="post">
+            <textarea id="post-textarea" class="form-control" ></textarea>
+            <input id = "post-btn" type="submit" class="btn btn-primary" value="Post"/>
+        </form>
+    </div>
+        
+
+    <div id="all-posts-view">     
+    </div>
+
+
+    <div id="following-view"></div>
+
+
+
+{% endblock %}
+
+

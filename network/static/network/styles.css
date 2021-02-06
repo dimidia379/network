@@ -1,0 +1,71 @@
+.btn {
+    margin: 5px;
+}
+.edit-btn {
+    margin: 2px;
+    padding: 2px;
+}
+
+textarea {
+    max-width: 80%;
+}
+
+#new-post-view {
+    margin: 10px;
+}
+
+#all-posts {
+    margin: 20px;
+}
+
+.posts-row {
+    border: 1px solid rgb(175, 170, 170);
+    padding: 5px;
+    margin: 5px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    word-wrap:break-word;
+}
+
+
+.author-username:hover {
+    text-decoration:none;
+    color:#d1530a;
+  }
+  
+.author-username {
+    cursor:pointer;
+ }
+
+ #profile-name {
+    color: #720416;
+     font-weight: bold;
+ }
+
+.like-toggle {
+  outline:none;
+  box-shadow:none;
+  border: none;
+  width: 40px;
+  font-size: 1.3em;
+  border-radius: 100px;
+}
+
+.like-active {
+  
+  color: #bb0826;
+  outline:none;
+  box-shadow:none;
+  border: none;
+}
+
+.pgn {
+    padding: 5px;
+    margin: 5px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    
+}
