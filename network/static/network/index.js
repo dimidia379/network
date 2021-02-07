@@ -177,7 +177,6 @@ function following() {
       
 
 
-
 function profile(nekto) {   
   //Show profile view and hide other views
   document.querySelector('#new_post_view').style.display = 'none';
@@ -203,26 +202,27 @@ function profile(nekto) {
     const div = document.createElement('div');
     div.innerHTML = `<div data-user="${nekto}" id="profile-name">${name}</div><div>Following: ${following}</div><div>Followers: ${followers}</div>`;
 
-    const button = document.createElement('button');
-    button.id = 'follow-btn';
-    
     document.querySelector('#user-info').append(div);    
+
+    // Add FOLLOW button
+    const button = document.createElement('button');
+    button.id = 'follow-btn';    
+    button.addEventListener('click', followUser);
+    button.innerHTML = 'Follow';
+
+    // Rename FOLLOW button if user already followed
+    if (is_followed == true) {
+      button.innerHTML = 'Unfollow';
+    };    
   
     if (document.querySelector('#profile-link')) {
-      document.querySelector('#user-info').append(button);
-      button.addEventListener('click', follow);
-      
-      // Rename FOLLOW button if user already followed
-      if (is_followed == true) {
-          button.innerHTML = 'Unfollow';
-        };
-
-      //Hide FOLLOW button if user in his own profile
-      const current_user = document.querySelector('#profile-link').dataset.userid;
-      if (current_user == nekto) {
-        button.style.display = 'none';
-      };
-    }              
+      document.querySelector('#user-info').append(button);   
+    }  
+    //Hide FOLLOW button if user in his own profile
+    const current_user = document.querySelector('#profile-link').dataset.userid;
+    if (current_user == nekto) {
+      button.style.display = 'none';
+      };                  
   });  
 
   // Get user's posts
@@ -265,7 +265,7 @@ function editBtnVision(post_author) {
 
 
 // Follow user
-function follow() {
+function followUser() {
   fetch('/follow', {
     method:'POST',
     body: JSON.stringify({
@@ -277,7 +277,8 @@ function follow() {
   })
   .then(result => {
     console.log(result)
-    document.querySelector(".followbtn").innerText = 'Unfollow';    
+    document.querySelector("#follow-btn").innerText = 'Unfollow';
+    profile(document.querySelector("#profile-name").dataset.user);
   });  
   return false;  
 } 
@@ -351,7 +352,7 @@ function post_like(post_id, post_is_liked) {
       document.querySelector(counter_selector).innerHTML = counter + 1;
       document.querySelector(button_selector).classList.toggle('like-active');
     }
-    allposts();
+    allposts(1);
   });
   // Prevent default submission
   return false;  
