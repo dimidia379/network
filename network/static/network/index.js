@@ -1,51 +1,58 @@
 document.addEventListener('DOMContentLoaded', function() {      
     //Load content for authenticated user
     if (document.querySelector('#profile-link')) {
-      document.querySelector('#following-link').addEventListener('click', following);
-      const userid = document.querySelector('#profile-link').dataset.userid;
-      document.querySelector('#profile-link').addEventListener('click', () => profile(userid));
+      document.querySelector('#following-link').addEventListener('click', () => following(1));
+      const userID = document.querySelector('#profile-link').dataset.userid;
+      document.querySelector('#profile-link').addEventListener('click', () => profile(userID, 1));
       document.querySelector('#post-form').onsubmit = create_post;
       document.querySelector('#post-textarea').value = ''; 
     }  
-    document.querySelector('#posts-link').addEventListener('click', () => allposts(1));
-    /* document.querySelector('#previous').style.display = 'none'; */
+    document.querySelector('#posts-link').addEventListener('click', () => allPosts(1));
 
    // By default load all  posts
-    allposts(1);
+    allPosts(1);
 });
 
+// Add page navigation buttons
+function pagination(area, pagen, numberOfPages) {
+  const previous = document.createElement("button");
+  const next = document.createElement("button");
+  previous.innerHTML = "Previous";  
+  next.innerHTML = "Next";
+  
 
-// Creare new post
-function create_post() {
-  textarea = document.querySelector('#post-textarea').value;
-  if (textarea) {
-    fetch('/create', {
-      method:'POST',
-      body: JSON.stringify({
-        text: textarea
-      })
-    })
-    .then(response => {
-      response.json();
-    })
-    .then(result => {
-      console.log(result)
-      document.querySelector('#all-posts-view').innerHTML = '';
-      allposts();
-    });
+  if (area == "all_posts") {
+    previous.addEventListener("click", () => allPosts(pagen - 1));
+    next.addEventListener("click", () => allPosts(pagen + 1));
+    
+  } else if (area == "following") {
+    previous.addEventListener("click", () => following(pagen - 1));
+    next.addEventListener("click", () => following(pagen + 1));
+    
   } else {
-    alert('Please add text to your post');
-  }  
-  return false;  
-} 
+    const userID = Number(area);
+    previous.addEventListener("click", () => profile(userID, pagen - 1));
+    next.addEventListener("click", () => profile(userID, pagen + 1));    
+  }    
+  
+  if (pagen > 0 && pagen < numberOfPages) {
+    document.querySelector(".pagination").append(next);
+    console.log('next');
+  } 
+  if (pagen > 1 && pagen <= numberOfPages) {
+    document.querySelector(".pagination").append(previous);
+    console.log('previous');
+  }
+}
 
 
+// Compose post
 function compose_post(post_id, user_id, author, text, timestamp, count_likes, likes, appended_to_selector) {
   
   const div = document.createElement('div');
   div.id = "post-" + post_id;
   div.className = "posts-row";
-  div.innerHTML = `<div class="author-username" onclick="profile(${user_id})"><strong>${author}</strong></div><div id="post-text-${post_id}" contenteditable="false">${text}</div><div>${timestamp}</div>`;
+  div.innerHTML = `<div class="author-username" onclick="profile(${user_id}, 1)"><strong>${author}</strong></div><div id="post-text-${post_id}" contenteditable="false">${text}</div><div>${timestamp}</div>`;
 
   // Create EDIT button 
   const button = document.createElement('button');
@@ -70,28 +77,83 @@ function compose_post(post_id, user_id, author, text, timestamp, count_likes, li
     }
   }    
 
-  like.addEventListener('click', () => post_like(post_id, post_is_liked));
+  like.addEventListener('click', () => postLike(post_id, post_is_liked));
   div.append(like); 
 
   // Add EDIT button  if user is author of this post
   if (document.querySelector('#profile-link') && user_id == document.querySelector('#profile-link').dataset.userid) {
     div.append(button);  
   }  
+  document.querySelector(appended_to_selector).append(div);    
+}
 
-  document.querySelector(appended_to_selector).append(div);  
-  
+
+// Publish new post
+function create_post() {
+  const textarea = document.querySelector('#post-textarea').value;
+  if (textarea) {
+    fetch('/create', {
+      method:'POST',
+      body: JSON.stringify({
+        text: textarea
+      })
+    })
+    .then(response => {
+      response.json();
+    })
+    .then(result => {
+      console.log(result)
+      document.querySelector('#all-posts-view').innerHTML = '';
+      allPosts(1);
+    });
+  } else {
+    alert('Please add text to your post');
+  }  
+  return false;  
+} 
+
+
+ // Add posts and pagination
+ function getPosts(area, pageNum) {
+  const url = `/posts/${area}/${pageNum}`;
+  fetch(url)
+  .then(response => response.json())
+  .then(answer => {
+      console.log(answer);
+      const posts = answer.posts;
+      const number_of_pages = answer.number_of_pages;
+      posts.forEach(post => {
+          const post_id = post["id"];
+          const author = post["author"];
+          const text = post["text"];
+          const timestamp = post["timestamp"];
+          const user_id = post["author_id"];
+          const count_likes = post["count_likes"];
+          const likes = post["likes"];
+          let appended_to_selector = '';
+          if (area == "all_posts") {
+            appended_to_selector = '#all-posts-view';
+          } else if (area == "following") {
+            appended_to_selector = '#following-view';
+          } else {
+            appended_to_selector = '#user-posts';
+          }          
+          compose_post(post_id, user_id, author, text, timestamp, count_likes, likes, appended_to_selector);           
+      })
+      pagination(area, pageNum, number_of_pages);    
+});
 }
 
 
 // All posts
-function allposts(pagen) {
+function allPosts(pagen) {
   // Show the all-posts-view and hide other views 
   document.querySelector('#all-posts-view').style.display = 'block';
   document.querySelector('#profile-view').style.display = 'none';
   document.querySelector('#following-view').style.display = 'none';
   document.querySelector('#all-posts-view').innerHTML = `<h1>All Posts</h1>`;
-  document.querySelector('.pagination').innerHTML = '';  
-
+  document.querySelector(".pagination").innerHTML = '';
+  
   // Show textarea for new post if user is authenticated
   if (document.querySelector('#profile-link')) {
     document.querySelector('#new_post_view').style.display = 'block';
@@ -100,84 +162,31 @@ function allposts(pagen) {
     document.querySelector('#new_post_view').style.display = 'none';
   }    
 
-  // Get posts list
-  url = '/posts/page/' + pagen;
-  fetch(url)
-  .then(response => response.json())
-   .then(answer => {
-      console.log(answer);
-      const posts = answer.posts;
-      const number_of_pages = answer.number_of_pages;
-      posts.forEach(post => {
-        const post_id = post["id"];
-        const author = post["author"];
-        const text = post["text"];
-        const timestamp = post["timestamp"];
-        const user_id = post["author_id"];
-        const count_likes = post["count_likes"];
-        const likes = post["likes"];
-        const appended_to_selector = '#all-posts-view';
-        compose_post(post_id, user_id, author, text, timestamp, count_likes, likes, appended_to_selector);
-      })
-      pagination(pagen, number_of_pages);    
-  });
+  // Get posts list  
+  getPosts('all_posts', pagen);
   // Prevent default submission
   return false; 
 }
-
-
-// Add page navigation buttons
-function pagination(pagen, number_of_pages) {
-  previous = document.createElement("button");
-  previous.innerHTML = "Previous";
-  previous.addEventListener("click", () => allposts(pagen - 1));  
-
-  next = document.createElement("button");
-  next.innerHTML = "Next";
-  next.addEventListener("click", () => allposts(pagen + 1));
-
-  if (pagen > 0 && pagen < number_of_pages) {
-    document.querySelector(".pagination").append(next);
-  } 
-  if (pagen > 1 && pagen <= number_of_pages) {
-    document.querySelector(".pagination").append(previous);
-  }
-}
-
+  
 
 // Following list
-function following() {
+function following(pagen) {
   // Show the following and hide other views  
   document.querySelector('#new_post_view').style.display = 'none';
   document.querySelector('#all-posts-view').style.display = 'none';
   document.querySelector('#profile-view').style.display = 'none';
   document.querySelector('#following-view').style.display = 'block';
+  document.querySelector(".pagination").innerHTML = '';
   document.querySelector('#following-view').innerHTML = '<strong>Following</strong>';
   
-  // Posts list
-  fetch('/following')
-  .then(response => response.json())
-  .then(posts => {
-    console.log(posts);
-    posts.forEach(post => {
-      const post_id = post["id"];
-      const author = post["author"];
-      const text = post["text"];
-      const timestamp = post["timestamp"];
-      const user_id = post["author_id"];
-      const count_likes = post["count_likes"];
-      const likes = post["likes"];
-      const appended_to_selector = '#following-view';
-      compose_post(post_id, user_id, author, text, timestamp, count_likes, likes, appended_to_selector);
-    })  
-  });  
+  // Get posts list
+  getPosts('following', pagen);
   // Prevent default submission
   return false;  
 }
-      
+        
 
-
-function profile(nekto) {   
+function profile(profileID, pagen) {   
   //Show profile view and hide other views
   document.querySelector('#new_post_view').style.display = 'none';
   document.querySelector('#all-posts-view').style.display = 'none';
@@ -185,66 +194,54 @@ function profile(nekto) {
   document.querySelector('#profile-view').style.display = 'block';
 
   document.querySelector('#user-info').innerHTML = '';
-  document.querySelector('#user-posts').innerHTML = '';      
+  document.querySelector('#user-posts').innerHTML = '';
+  document.querySelector(".pagination").innerHTML = '';      
 
   // Get information about following and followers
-  url_user = "/profile/" + nekto;
+  const url_user = "/profile/" + profileID;
   fetch(url_user)
   .then(response => response.json())
   .then(follow => {
     console.log(follow);
-    console.log(nekto);
     const name = follow["name"];
     const following = follow["following"];
     const followers = follow["followers"]; 
     const is_followed = follow["is_followed"];
 
     const div = document.createElement('div');
-    div.innerHTML = `<div data-user="${nekto}" id="profile-name">${name}</div><div>Following: ${following}</div><div>Followers: ${followers}</div>`;
+    div.innerHTML = `<div data-user="${profileID}" id="profile-name">${name}</div><div>Following: ${following}</div><div>Followers: ${followers}</div>`;
 
-    document.querySelector('#user-info').append(div);    
-
-    // Add FOLLOW button
+    // Create FOLLOW button
     const button = document.createElement('button');
-    button.id = 'follow-btn';    
+    button.id = 'follow-btn';
+    button.innerHTML = "Follow";
     button.addEventListener('click', followUser);
-    button.innerHTML = 'Follow';
+    
+    document.querySelector('#user-info').append(div);    
+    
+    // Append FOLLOW button
+    if (document.querySelector('#profile-link')) {      
+      document.querySelector('#user-info').append(button);
+            
+      // Rename FOLLOW button if user already followed
+      if (is_followed) {
+          button.innerHTML = 'Unfollow';
+        };
 
-    // Rename FOLLOW button if user already followed
-    if (is_followed == true) {
-      button.innerHTML = 'Unfollow';
-    };    
-  
-    if (document.querySelector('#profile-link')) {
-      document.querySelector('#user-info').append(button);   
-    }  
-    //Hide FOLLOW button if user in his own profile
-    const current_user = document.querySelector('#profile-link').dataset.userid;
-    if (current_user == nekto) {
-      button.style.display = 'none';
-      };                  
-  });  
+      //Hide FOLLOW button if user in his own profile
+      const current_user = document.querySelector('#profile-link').dataset.userid;
+      if (current_user == profileID) {
+        button.style.display = 'none';
+      };
 
-  // Get user's posts
-  url_posts = "/posts/" + nekto;
-  fetch(url_posts)
-  .then(response => response.json())
-  .then(posts => {
-    console.log(posts);
-    posts.forEach(post => {
-      const post_id = post["id"];
-      const text = post["text"];
-      const likes = post["likes"];
-      const author = post["author"];
-      const timestamp = post["timestamp"];
-      const user_id = post["author_id"];    
-      const count_likes = post["count_likes"];  
-      const appended_to_selector = '#user-posts';
-      compose_post(post_id, user_id, author, text, timestamp, count_likes, likes, appended_to_selector);
-    })
+
+    // Get user's posts
+    getPosts(profileID, pagen);
+    }              
   });
-// Prevent default submission
-  return false;  
+  
+  // Prevent default submission
+  return false;   
 }
 
 
@@ -304,7 +301,7 @@ function post_edit(post_id) {
 // Publish edited post
 function save_edit(post_id) {
   const text_selector = "#post-text-" + post_id;
-  url = '/edit/' + post_id;
+  const url = '/edit/' + post_id;
   fetch(url, {
     method: 'PUT',
     body: JSON.stringify({
@@ -320,7 +317,7 @@ function save_edit(post_id) {
       user = document.querySelector('#profile-name').dataset.user;
       profile(user);
     } else {
-      allposts();
+      allPosts(1);
     }
   });
   // Prevent default submission
@@ -328,12 +325,12 @@ function save_edit(post_id) {
 }
 
 
-function post_like(post_id, post_is_liked) {
-  const button_selector = "#like-btn-" + post_id; 
-  const counter_selector = "#like-cnt-" + post_id;
+function postLike(postID, post_is_liked) {
+  const button_selector = "#like-btn-" + postID; 
+  const counter_selector = "#like-cnt-" + postID;
   const counter = Number(document.querySelector(counter_selector).innerHTML);  
 
-  url = '/like/' + post_id;
+  const url = '/like/' + postID;
   fetch(url, {
     method: 'PUT',
     body: JSON.stringify({
@@ -352,7 +349,7 @@ function post_like(post_id, post_is_liked) {
       document.querySelector(counter_selector).innerHTML = counter + 1;
       document.querySelector(button_selector).classList.toggle('like-active');
     }
-    allposts(1);
+    allPosts(1);
   });
   // Prevent default submission
   return false;  

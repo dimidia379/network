@@ -9,7 +9,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import json
 
 from .models import User, Post
@@ -88,46 +88,45 @@ def create(request):
     return JsonResponse({"message": "Post published successfully."}, status=201)
 
 
-def posts(request, page_n):
-    posts_non_order = Post.objects.all()
-    allposts = posts_non_order.order_by("-timestamp").all()
-    p = Paginator(allposts, 3)
-
+def posts(request, area, page_n):
     
+
+    if area == "all_posts":
+        allposts = Post.objects.all().order_by("-timestamp")
+
+    elif area == "following":
+        follower = request.user
+        following_list = []
+        users = User.objects.all()
+        for user in users:
+            user_followers = user.followers.all()
+            if follower in user_followers:
+                following_list.append(user)
+        allposts = []
+        for following in following_list:
+            allposts += Post.objects.filter(user = following)
+
+    else:
+        user_id = int(area)
+        posts_non_order = Post.objects.filter(user = user_id)
+        allposts = posts_non_order.order_by("-timestamp").all()
+        
+    p = Paginator(allposts, 3)
+    number_of_pages = p.num_pages
+
     try:
         posts = p.page(page_n)
     except PageNotAnInteger:
         posts = p.page(1)
     except EmptyPage:
         posts = p.page(p.num_pages)
-
-    number_of_pages = p.num_pages
+    
     answer = {
         'posts': [post.serialize() for post in posts],
         'number_of_pages': number_of_pages
-        }  
+        }          
     return JsonResponse(answer)
 
-
-def userposts(request, user_id):
-    posts_non_order = Post.objects.filter(user = user_id)
-    posts = posts_non_order.order_by("-timestamp").all()
-    return JsonResponse([post.serialize() for post in posts], safe=False)
-
-
-@login_required
-def following(request):
-    follower = request.user
-    following_list = []
-    users = User.objects.all()
-    for user in users:
-        user_followers = user.followers.all()
-        if follower in user_followers:
-            following_list.append(user)
-    posts = []
-    for following in following_list:
-        posts += Post.objects.filter(user = following)
-    return JsonResponse([post.serialize() for post in posts], safe=False)
 
 
 def profile(request, user_id):

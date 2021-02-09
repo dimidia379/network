@@ -1,5 +1,5 @@
 # def posts(request, area, page_n):
-#     number_of_pages = p.num_pages
+    
 
 #     if area == "all_posts":
 #         allposts = Post.objects.all().order_by("-timestamp")
@@ -22,6 +22,7 @@
 #         allposts = posts_non_order.order_by("-timestamp").all()
         
 #     p = Paginator(allposts, 3)
+#     number_of_pages = p.num_pages
 
 #     try:
 #         posts = p.page(page_n)
@@ -41,7 +42,13 @@
 
 
 
-
+    # # API Routes
+    # path("posts/<str:area>/<int:page_n>", views.posts, name="posts"),    
+    # path("create", views.create, name="create"),
+    # path("profile/<int:user_id>", views.profile, name="profile"),
+    # path("follow", views.follow, name="follow"),
+    # path("edit/<int:post_id>", views.save_edit, name="save_edit"),
+    # path("like/<int:post_id>", views.post_like, name="post_like"),
 
 
 

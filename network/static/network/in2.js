@@ -2,12 +2,29 @@
 // Свести все в две функции: вывод постов и профайл(с выводом постов в нем)
 
 
-
-
-
-
-
-
+  // Get posts
+  function getPosts(area, pageNum) {
+    url = `/posts/${area}/${pageNum}`;
+    fetch(url)
+    .then(response => response.json())
+    .then(answer => {
+        console.log(answer);
+        const posts = answer.posts;
+        const number_of_pages = answer.number_of_pages;
+        posts.forEach(post => {
+            const post_id = post["id"];
+            const author = post["author"];
+            const text = post["text"];
+            const timestamp = post["timestamp"];
+            const user_id = post["author_id"];
+            const count_likes = post["count_likes"];
+            const likes = post["likes"];
+            const appended_to_selector = '#all-posts-view';
+            compose_post(post_id, user_id, author, text, timestamp, count_likes, likes, appended_to_selector);           
+        })
+        pagination(pageNum, number_of_pages);    
+  });
+}
 
 
 // All posts
@@ -28,52 +45,14 @@ function allposts(pagen) {
     }    
   
     // Get posts list
-    url = '/posts/page/' + pagen;
-    fetch(url)
-    .then(response => response.json())
-     .then(answer => {
-        console.log(answer);
-        const posts = answer.posts;
-        const number_of_pages = answer.number_of_pages;
-        posts.forEach(post => {
-          const post_id = post["id"];
-          const author = post["author"];
-          const text = post["text"];
-          const timestamp = post["timestamp"];
-          const user_id = post["author_id"];
-          const count_likes = post["count_likes"];
-          const likes = post["likes"];
-          const appended_to_selector = '#all-posts-view';
-          compose_post(post_id, user_id, author, text, timestamp, count_likes, likes, appended_to_selector);
-        })
-        pagination(pagen, number_of_pages);    
-    });
+    getPosts(allposts, pagen);
     // Prevent default submission
     return false; 
   }
-  
-  
-  // Add page navigation buttons
-  function pagination(pagen, number_of_pages) {
-    previous = document.createElement("button");
-    previous.innerHTML = "Previous";
-    previous.addEventListener("click", () => allposts(pagen - 1));  
-  
-    next = document.createElement("button");
-    next.innerHTML = "Next";
-    next.addEventListener("click", () => allposts(pagen + 1));
-  
-    if (pagen > 0 && pagen < number_of_pages) {
-      document.querySelector(".pagination").append(next);
-    } 
-    if (pagen > 1 && pagen <= number_of_pages) {
-      document.querySelector(".pagination").append(previous);
-    }
-  }
-  
+    
   
   // Following list
-  function following() {
+  function following(pagen) {
     // Show the following and hide other views  
     document.querySelector('#new_post_view').style.display = 'none';
     document.querySelector('#all-posts-view').style.display = 'none';
@@ -81,30 +60,14 @@ function allposts(pagen) {
     document.querySelector('#following-view').style.display = 'block';
     document.querySelector('#following-view').innerHTML = '<strong>Following</strong>';
     
-    // Posts list
-    fetch('/following')
-    .then(response => response.json())
-    .then(posts => {
-      console.log(posts);
-      posts.forEach(post => {
-        const post_id = post["id"];
-        const author = post["author"];
-        const text = post["text"];
-        const timestamp = post["timestamp"];
-        const user_id = post["author_id"];
-        const count_likes = post["count_likes"];
-        const likes = post["likes"];
-        const appended_to_selector = '#following-view';
-        compose_post(post_id, user_id, author, text, timestamp, count_likes, likes, appended_to_selector);
-      })  
-    });  
+    // Get posts list
+    getPosts(following, pagen);
     // Prevent default submission
     return false;  
   }
-        
+          
   
-  
-  function profile(nekto) {   
+  function profile(nekto, pagen) {   
     //Show profile view and hide other views
     document.querySelector('#new_post_view').style.display = 'none';
     document.querySelector('#all-posts-view').style.display = 'none';
@@ -150,27 +113,13 @@ function allposts(pagen) {
           button.style.display = 'none';
         };
       }              
-    });  
+    });
   
     // Get user's posts
-    url_posts = "/posts/" + nekto;
-    fetch(url_posts)
-    .then(response => response.json())
-    .then(posts => {
-      console.log(posts);
-      posts.forEach(post => {
-        const post_id = post["id"];
-        const text = post["text"];
-        const likes = post["likes"];
-        const author = post["author"];
-        const timestamp = post["timestamp"];
-        const user_id = post["author_id"];    
-        const count_likes = post["count_likes"];  
-        const appended_to_selector = '#user-posts';
-        compose_post(post_id, user_id, author, text, timestamp, count_likes, likes, appended_to_selector);
-      })
-    });
-  // Prevent default submission
-    return false;  
+    getPosts(nekto, pagen);
+    // Prevent default submission
+    return false;   
   }
+  
+
   
