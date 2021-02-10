@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
       document.querySelector('#following-link').addEventListener('click', () => following(1));
       const userID = document.querySelector('#profile-link').dataset.userid;
       document.querySelector('#profile-link').addEventListener('click', () => profile(userID, 1));
-      document.querySelector('#post-form').onsubmit = create_post;
+      document.querySelector('#post-form').onsubmit = createPost;
       document.querySelector('#post-textarea').value = ''; 
     }  
     document.querySelector('#posts-link').addEventListener('click', () => allPosts(1));
@@ -12,6 +12,52 @@ document.addEventListener('DOMContentLoaded', function() {
    // By default load all  posts
     allPosts(1);
 });
+
+
+// Compose post
+function composePost(post_id, user_id, author, text, timestamp, count_likes, likes, appended_to_selector) {
+  
+  const div = document.createElement('div');
+  div.id = "post-" + post_id;
+  div.className = "posts-row";
+  div.innerHTML = `<div class="author-username" onclick="profile(${user_id}, 1)"><strong>${author}</strong></div> \ 
+                   <div id="post-text-${post_id}" contenteditable="false">${text}</div><div>${timestamp}</div>`;
+
+  // Create EDIT button 
+  const button = document.createElement('button');
+  button.id = "edit-" + post_id;
+  button.className = 'btn btn-link edit-btn';
+  button.innerHTML = 'Edit post';
+  button.addEventListener('click', () => post_edit(post_id));
+
+  // Add LIKE button
+  const like = document.createElement('div');
+  like.innerHTML = `<button id="like-btn-${post_id}" class='like-toggle' data-author='${user_id}'>♥</button> \
+                    <span id="like-cnt-${post_id}" class='counter'>${count_likes}</span>`;
+  like.className = 'post-like';    
+
+
+  let postIsLiked = false;
+  // Color LIKE button if post was liked by user
+  if (document.querySelector('#profile-link')) {
+    const currentUserId = Number(document.querySelector('#profile-link').dataset.userid);
+    if (likes.includes(currentUserId)) {
+      like.innerHTML = `<button id="like-btn-${post_id}" class='like-toggle like-active'>♥</button> \
+                        <span id="like-cnt-${post_id}" class='counter'>${count_likes}</span>`;
+      postIsLiked = true;      
+    }
+  }    
+
+  like.addEventListener('click', () => postLike(post_id, postIsLiked));
+  div.append(like); 
+
+  // Add EDIT button  if user is author of this post
+  if (document.querySelector('#profile-link') && user_id == document.querySelector('#profile-link').dataset.userid) {
+    div.append(button);  
+  }  
+  document.querySelector(appended_to_selector).append(div);    
+}
+
 
 // Add page navigation buttons
 function pagination(area, pagen, numberOfPages) {
@@ -36,85 +82,18 @@ function pagination(area, pagen, numberOfPages) {
   }    
   
   if (pagen > 0 && pagen < numberOfPages) {
-    document.querySelector(".pagination").append(next);
-    console.log('next');
+    document.querySelector(".pagination").append(next);    
   } 
   if (pagen > 1 && pagen <= numberOfPages) {
-    document.querySelector(".pagination").append(previous);
-    console.log('previous');
+    document.querySelector(".pagination").append(previous);    
   }
 }
 
 
-// Compose post
-function compose_post(post_id, user_id, author, text, timestamp, count_likes, likes, appended_to_selector) {
-  
-  const div = document.createElement('div');
-  div.id = "post-" + post_id;
-  div.className = "posts-row";
-  div.innerHTML = `<div class="author-username" onclick="profile(${user_id}, 1)"><strong>${author}</strong></div><div id="post-text-${post_id}" contenteditable="false">${text}</div><div>${timestamp}</div>`;
-
-  // Create EDIT button 
-  const button = document.createElement('button');
-  button.id = "edit-" + post_id;
-  button.className = 'btn btn-link edit-btn';
-  button.innerHTML = 'Edit post';
-  button.addEventListener('click', () => post_edit(post_id));
-
-  // Add LIKE button
-  like = document.createElement('div');
-  like.innerHTML = `<button id="like-btn-${post_id}" class='like-toggle'>♥</button><span id="like-cnt-${post_id}" class='counter'>${count_likes}</span>`;
-  like.className = 'post-like';    
-
-
-  post_is_liked = false;
-  // Color LIKE button if post was liked by user
-  if (document.querySelector('#profile-link')) {
-    current_user_id = Number(document.querySelector('#profile-link').dataset.userid);
-    if (likes.includes(current_user_id)) {
-      like.innerHTML = `<button id="like-btn-${post_id}" class='like-toggle like-active'>♥</button><span id="like-cnt-${post_id}" class='counter'>${count_likes}</span>`;
-      post_is_liked = true;      
-    }
-  }    
-
-  like.addEventListener('click', () => postLike(post_id, post_is_liked));
-  div.append(like); 
-
-  // Add EDIT button  if user is author of this post
-  if (document.querySelector('#profile-link') && user_id == document.querySelector('#profile-link').dataset.userid) {
-    div.append(button);  
-  }  
-  document.querySelector(appended_to_selector).append(div);    
-}
-
-
-// Publish new post
-function create_post() {
-  const textarea = document.querySelector('#post-textarea').value;
-  if (textarea) {
-    fetch('/create', {
-      method:'POST',
-      body: JSON.stringify({
-        text: textarea
-      })
-    })
-    .then(response => {
-      response.json();
-    })
-    .then(result => {
-      console.log(result)
-      document.querySelector('#all-posts-view').innerHTML = '';
-      allPosts(1);
-    });
-  } else {
-    alert('Please add text to your post');
-  }  
-  return false;  
-} 
-
-
  // Add posts and pagination
  function getPosts(area, pageNum) {
+  document.querySelector("#pageNumber").setAttribute("currentPage", pageNum);
+  document.querySelector("#pageNumber").setAttribute("currentArea", area);
   const url = `/posts/${area}/${pageNum}`;
   fetch(url)
   .then(response => response.json())
@@ -138,8 +117,9 @@ function create_post() {
           } else {
             appended_to_selector = '#user-posts';
           }          
-          compose_post(post_id, user_id, author, text, timestamp, count_likes, likes, appended_to_selector);           
-      })
+          composePost(post_id, user_id, author, text, timestamp, count_likes, likes, appended_to_selector);           
+      })   
+      
       pagination(area, pageNum, number_of_pages);    
 });
 }
@@ -154,6 +134,7 @@ function allPosts(pagen) {
   document.querySelector('#all-posts-view').innerHTML = `<h1>All Posts</h1>`;
   document.querySelector(".pagination").innerHTML = '';
   
+  
   // Show textarea for new post if user is authenticated
   if (document.querySelector('#profile-link')) {
     document.querySelector('#new_post_view').style.display = 'block';
@@ -162,14 +143,14 @@ function allPosts(pagen) {
     document.querySelector('#new_post_view').style.display = 'none';
   }    
 
-  // Get posts list  
+  // Get all posts list  
   getPosts('all_posts', pagen);
   // Prevent default submission
   return false; 
 }
   
 
-// Following list
+// Following view
 function following(pagen) {
   // Show the following and hide other views  
   document.querySelector('#new_post_view').style.display = 'none';
@@ -209,7 +190,8 @@ function profile(profileID, pagen) {
     const is_followed = follow["is_followed"];
 
     const div = document.createElement('div');
-    div.innerHTML = `<div data-user="${profileID}" id="profile-name">${name}</div><div>Following: ${following}</div><div>Followers: ${followers}</div>`;
+    div.innerHTML = `<div data-user="${profileID}" id="profile-name">${name}</div> \
+                     <div>Following: ${following}</div><div>Followers: ${followers}</div>`;
 
     // Create FOLLOW button
     const button = document.createElement('button');
@@ -234,30 +216,140 @@ function profile(profileID, pagen) {
         button.style.display = 'none';
       };
 
-
     // Get user's posts
     getPosts(profileID, pagen);
     }              
-  });
-  
+  });  
   // Prevent default submission
   return false;   
 }
 
 
-
 // Set vision of Edit button if current user is author of the post
-function editBtnVision(post_author) {
-  const edit_btn = document.querySelectorAll('.edit-btn');
+function editBtnVision(postAuthor) {
+  const editBtn = document.querySelectorAll('.edit-btn');
 
   if (document.querySelector('#profile-link')) {
-    const current_user = document.querySelector('#profile-link').dataset.userid;
-    if (current_user == post_author) {
-          for (let i = 0; i < edit_btn.length; i += 1) {
-          edit_btn[i].style.display = 'block';
+    const currentUser = document.querySelector('#profile-link').dataset.userid;
+    if (currentUser == postAuthor) {
+          for (let i = 0; i < editBtn.length; i += 1) {
+          editBtn[i].style.display = 'block';
         }
     }
   }
+}
+
+
+// Publish new post
+function createPost() {
+  const textarea = document.querySelector('#post-textarea').value;
+  if (textarea) {
+    fetch('/create', {
+      method:'POST',
+      body: JSON.stringify({
+        text: textarea
+      })
+    })
+    .then(response => {
+      response.json();
+    })
+    .then(result => {
+      console.log(result)
+      document.querySelector('#all-posts-view').innerHTML = '';
+      allPosts(1);
+    });
+  } else {
+    alert('Please add text to your post');
+  }  
+  return false;  
+} 
+
+
+// Edit post
+function post_edit(post_id) {  
+  const text_selector = "#post-text-" + post_id;
+  const button_selector = "#edit-" + post_id;
+  const all_post_selector = "#post-" + post_id;
+  document.querySelector(text_selector).contentEditable = "true";
+  document.querySelector(button_selector).style.display = 'none';
+  
+  const button = document.createElement('button');
+  button.id = "save-post-" + post_id;
+  button.className = "btn btn-link";
+  button.innerHTML = 'Save edited post';
+  button.addEventListener('click', () => saveEdit(post_id));
+  document.querySelector(all_post_selector).append(button);
+  return document.querySelector(text_selector).focus();
+}
+
+// Publish edited post
+function saveEdit(post_id) {
+  const text_selector = "#post-text-" + post_id;
+  const url = '/edit/' + post_id;
+  fetch(url, {
+    method: 'PUT',
+    body: JSON.stringify({
+      text: document.querySelector(text_selector).innerHTML
+    })
+  })
+  .then(response => {
+    response.json();
+  })
+  .then(result => {
+    console.log(result)
+    if (document.querySelector('#profile-name')) {
+      const user = document.querySelector('#profile-name').dataset.user;
+      profile(user, 1);
+    } else {
+      allPosts(1);
+    }
+  });
+  // Prevent default submission
+  return false; 
+}
+
+
+function postLike(postID, postIsLiked) {
+  const buttonSelector = `#like-btn-${postID}`;
+  const counterSelector = `#like-cnt-${postID}`;
+  const userID = document.querySelector(buttonSelector).dataset.author;
+  const counter = Number(document.querySelector(counterSelector).innerHTML);  
+  const currentPage = document.querySelector("#pageNumber").getAttribute("currentPage");
+  const currentArea = document.querySelector("#pageNumber").getAttribute("currentArea");
+  
+  console.log(currentPage);
+
+  const url = `/like/${postID}`;
+  fetch(url, {
+    method: 'PUT',
+    body: JSON.stringify({
+      liker: document.querySelector('#profile-link').dataset.userid
+    })
+  })
+  .then(response => {
+    response.json();
+  })
+  .then(result => {
+    console.log(result)
+
+    if (postIsLiked === true) {
+      document.querySelector(counterSelector).innerHTML = counter - 1;
+      document.querySelector(buttonSelector).classList.toggle('like-toggle');
+    } else {
+      document.querySelector(counterSelector).innerHTML = counter + 1;
+      document.querySelector(buttonSelector).classList.toggle('like-active');
+    }
+
+    if (currentArea == "all_posts") {
+      allPosts(currentPage);
+    } else if (currentArea == "following") {
+      following(currentPage);
+    } else {
+      profile(userID, currentPage);
+    }    
+  });
+  // Prevent default submission
+  return false;  
 }
 
 
@@ -275,82 +367,7 @@ function followUser() {
   .then(result => {
     console.log(result)
     document.querySelector("#follow-btn").innerText = 'Unfollow';
-    profile(document.querySelector("#profile-name").dataset.user);
+    profile(document.querySelector("#profile-name").dataset.user, 1);
   });  
   return false;  
 } 
-
-
-// Edit post
-function post_edit(post_id) {  
-  const text_selector = "#post-text-" + post_id;
-  const button_selector = "#edit-" + post_id;
-  const all_post_selector = "#post-" + post_id;
-  document.querySelector(text_selector).contentEditable = "true";
-  document.querySelector(button_selector).style.display = 'none';
-  
-  const button = document.createElement('button');
-  button.id = "save-post-" + post_id;
-  button.className = "btn btn-link";
-  button.innerHTML = 'Save edited post';
-  button.addEventListener('click', () => save_edit(post_id));
-  document.querySelector(all_post_selector).append(button);
-  return document.querySelector(text_selector).focus();
-}
-
-// Publish edited post
-function save_edit(post_id) {
-  const text_selector = "#post-text-" + post_id;
-  const url = '/edit/' + post_id;
-  fetch(url, {
-    method: 'PUT',
-    body: JSON.stringify({
-      text: document.querySelector(text_selector).innerHTML
-    })
-  })
-  .then(response => {
-    response.json();
-  })
-  .then(result => {
-    console.log(result)
-    if (document.querySelector('#profile-name')) {
-      user = document.querySelector('#profile-name').dataset.user;
-      profile(user);
-    } else {
-      allPosts(1);
-    }
-  });
-  // Prevent default submission
-  return false; 
-}
-
-
-function postLike(postID, post_is_liked) {
-  const button_selector = "#like-btn-" + postID; 
-  const counter_selector = "#like-cnt-" + postID;
-  const counter = Number(document.querySelector(counter_selector).innerHTML);  
-
-  const url = '/like/' + postID;
-  fetch(url, {
-    method: 'PUT',
-    body: JSON.stringify({
-      liker: document.querySelector('#profile-link').dataset.userid
-    })
-  })
-  .then(response => {
-    response.json();
-  })
-  .then(result => {
-    console.log(result)
-    if (post_is_liked === true) {
-      document.querySelector(counter_selector).innerHTML = counter - 1;
-      document.querySelector(button_selector).classList.toggle('like-toggle');
-    } else {
-      document.querySelector(counter_selector).innerHTML = counter + 1;
-      document.querySelector(button_selector).classList.toggle('like-active');
-    }
-    allPosts(1);
-  });
-  // Prevent default submission
-  return false;  
-}
