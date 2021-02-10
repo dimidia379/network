@@ -88,9 +88,7 @@ def create(request):
     return JsonResponse({"message": "Post published successfully."}, status=201)
 
 
-def posts(request, area, page_n):
-    
-
+def posts(request, area, page_n):   
     if area == "all_posts":
         allposts = Post.objects.all().order_by("-timestamp")
 

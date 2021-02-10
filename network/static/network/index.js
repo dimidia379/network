@@ -32,7 +32,7 @@ function composePost(post_id, user_id, author, text, timestamp, count_likes, lik
 
   // Add LIKE button
   const like = document.createElement('div');
-  like.innerHTML = `<button id="like-btn-${post_id}" class='like-toggle' data-author='${user_id}'>♥</button> \
+  like.innerHTML = `<button id="like-btn-${post_id}" class='like-toggle' data-author="${user_id}">♥</button> \
                     <span id="like-cnt-${post_id}" class='counter'>${count_likes}</span>`;
   like.className = 'post-like';    
 
@@ -42,7 +42,7 @@ function composePost(post_id, user_id, author, text, timestamp, count_likes, lik
   if (document.querySelector('#profile-link')) {
     const currentUserId = Number(document.querySelector('#profile-link').dataset.userid);
     if (likes.includes(currentUserId)) {
-      like.innerHTML = `<button id="like-btn-${post_id}" class='like-toggle like-active'>♥</button> \
+      like.innerHTML = `<button id="like-btn-${post_id}" class='like-toggle like-active' data-author="${user_id}">♥</button> \
                         <span id="like-cnt-${post_id}" class='counter'>${count_likes}</span>`;
       postIsLiked = true;      
     }
@@ -65,6 +65,8 @@ function pagination(area, pagen, numberOfPages) {
   const next = document.createElement("button");
   previous.innerHTML = "Previous";  
   next.innerHTML = "Next";
+  next.className = "btn btn-primary";
+  previous.className = "btn btn-primary";
   
 
   if (area == "all_posts") {
@@ -196,6 +198,7 @@ function profile(profileID, pagen) {
     // Create FOLLOW button
     const button = document.createElement('button');
     button.id = 'follow-btn';
+    button.className = "btn btn-primary";
     button.innerHTML = "Follow";
     button.addEventListener('click', followUser);
     
@@ -214,12 +217,11 @@ function profile(profileID, pagen) {
       const current_user = document.querySelector('#profile-link').dataset.userid;
       if (current_user == profileID) {
         button.style.display = 'none';
-      };
-
-    // Get user's posts
-    getPosts(profileID, pagen);
+      };    
     }              
   });  
+  // Get user's posts
+  getPosts(profileID, pagen);
   // Prevent default submission
   return false;   
 }
@@ -310,44 +312,48 @@ function saveEdit(post_id) {
 
 
 function postLike(postID, postIsLiked) {
-  const buttonSelector = `#like-btn-${postID}`;
-  const counterSelector = `#like-cnt-${postID}`;
-  const userID = document.querySelector(buttonSelector).dataset.author;
-  const counter = Number(document.querySelector(counterSelector).innerHTML);  
-  const currentPage = document.querySelector("#pageNumber").getAttribute("currentPage");
-  const currentArea = document.querySelector("#pageNumber").getAttribute("currentArea");
-  
-  console.log(currentPage);
+  if (!document.querySelector('#profile-link')) {
+    alert("Please log in to like posts.")
+  } else {
+    const buttonSelector = `#like-btn-${postID}`;
+    const counterSelector = `#like-cnt-${postID}`;
+    const userID = document.querySelector(buttonSelector).dataset.author;
+    const counter = Number(document.querySelector(counterSelector).innerHTML);  
+    const currentPage = document.querySelector("#pageNumber").getAttribute("currentPage");
+    const currentArea = document.querySelector("#pageNumber").getAttribute("currentArea");
+    
+    console.log(currentPage);
 
-  const url = `/like/${postID}`;
-  fetch(url, {
-    method: 'PUT',
-    body: JSON.stringify({
-      liker: document.querySelector('#profile-link').dataset.userid
+    const url = `/like/${postID}`;
+    fetch(url, {
+      method: 'PUT',
+      body: JSON.stringify({
+        liker: document.querySelector('#profile-link').dataset.userid
+      })
     })
-  })
-  .then(response => {
-    response.json();
-  })
-  .then(result => {
-    console.log(result)
+    .then(response => {
+      response.json();
+    })
+    .then(result => {
+      console.log(result)
 
-    if (postIsLiked === true) {
-      document.querySelector(counterSelector).innerHTML = counter - 1;
-      document.querySelector(buttonSelector).classList.toggle('like-toggle');
-    } else {
-      document.querySelector(counterSelector).innerHTML = counter + 1;
-      document.querySelector(buttonSelector).classList.toggle('like-active');
-    }
+      if (postIsLiked === true) {
+        document.querySelector(counterSelector).innerHTML = counter - 1;
+        document.querySelector(buttonSelector).classList.toggle('like-toggle');
+      } else {
+        document.querySelector(counterSelector).innerHTML = counter + 1;
+        document.querySelector(buttonSelector).classList.toggle('like-active');
+      }
 
-    if (currentArea == "all_posts") {
-      allPosts(currentPage);
-    } else if (currentArea == "following") {
-      following(currentPage);
-    } else {
-      profile(userID, currentPage);
-    }    
-  });
+      if (currentArea == "all_posts") {
+        allPosts(currentPage);
+      } else if (currentArea == "following") {
+        following(currentPage);
+      } else {
+        profile(userID, currentPage);
+      }    
+    });
+  }
   // Prevent default submission
   return false;  
 }

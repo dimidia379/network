@@ -1,13 +1,16 @@
 .btn {
     margin: 5px;
+    width: 120px;
 }
+
 .edit-btn {
     margin: 2px;
     padding: 2px;
 }
 
-textarea {
-    max-width: 80%;
+#post-form {
+    padding: 2px;
+    margin: 2px;
 }
 
 #new-post-view {
@@ -29,19 +32,18 @@ textarea {
     word-wrap:break-word;
 }
 
-
 .author-username:hover {
     text-decoration:none;
     color:#d1530a;
-  }
+}
   
 .author-username {
     cursor:pointer;
  }
 
  #profile-name {
-    color: #720416;
-     font-weight: bold;
+    font-size: 30px;
+    font-weight: bold;
  }
 
 .like-toggle {
@@ -53,19 +55,37 @@ textarea {
   border-radius: 100px;
 }
 
-.like-active {
-  
+.like-active {  
   color: #bb0826;
   outline:none;
   box-shadow:none;
   border: none;
 }
 
-.pgn {
+.pagination {
     padding: 5px;
     margin: 5px;
     display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    
+    flex-direction: row-reverse;
+    justify-content: space-between;    
+}
+
+.body {
+    margin-top: 10px;
+}
+
+#user-info {
+    margin: 15px;
+}
+
+#follow-btn {
+    margin: 10px;
+}
+
+#profile-link {
+    font-weight: bold;
+}
+
+.navbar-brand {
+    font-size: 2.25rem;
 }
