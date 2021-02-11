@@ -109,7 +109,7 @@ def posts(request, area, page_n):
         posts_non_order = Post.objects.filter(user = user_id)
         allposts = posts_non_order.order_by("-timestamp").all()
         
-    p = Paginator(allposts, 3)
+    p = Paginator(allposts, 10)
     number_of_pages = p.num_pages
 
     try:

@@ -21,14 +21,14 @@ function composePost(post_id, user_id, author, text, timestamp, count_likes, lik
   div.id = "post-" + post_id;
   div.className = "posts-row";
   div.innerHTML = `<div class="author-username" onclick="profile(${user_id}, 1)"><strong>${author}</strong></div> \ 
-                   <div id="post-text-${post_id}" contenteditable="false">${text}</div><div>${timestamp}</div>`;
+                   <div id="post-text-${post_id}" class="text-post">${text}</div><div class="post-date">${timestamp}</div>`;
 
   // Create EDIT button 
   const button = document.createElement('button');
   button.id = "edit-" + post_id;
   button.className = 'btn btn-link edit-btn';
   button.innerHTML = 'Edit post';
-  button.addEventListener('click', () => post_edit(post_id));
+  button.addEventListener('click', () => postEdit(post_id, text));
 
   // Add LIKE button
   const like = document.createElement('div');
@@ -160,7 +160,7 @@ function following(pagen) {
   document.querySelector('#profile-view').style.display = 'none';
   document.querySelector('#following-view').style.display = 'block';
   document.querySelector(".pagination").innerHTML = '';
-  document.querySelector('#following-view').innerHTML = '<strong>Following</strong>';
+  document.querySelector('#following-view').innerHTML = '<h2>Following</h2>';
   
   // Get posts list
   getPosts('following', pagen);
@@ -266,32 +266,35 @@ function createPost() {
   return false;  
 } 
 
-
 // Edit post
-function post_edit(post_id) {  
-  const text_selector = "#post-text-" + post_id;
-  const button_selector = "#edit-" + post_id;
-  const all_post_selector = "#post-" + post_id;
-  document.querySelector(text_selector).contentEditable = "true";
+function postEdit(postId, text) {  
+  const text_selector = "#post-text-" + postId;
+  const button_selector = "#edit-" + postId;
+  const all_post_selector = "#post-" + postId;
+  
   document.querySelector(button_selector).style.display = 'none';
+  document.querySelector(text_selector).innerHTML = `<textarea id="edit-textarea" class="form-control" >${text}</textarea>`;
   
   const button = document.createElement('button');
-  button.id = "save-post-" + post_id;
+  button.id = "save-post-" + postId;
   button.className = "btn btn-link";
   button.innerHTML = 'Save edited post';
-  button.addEventListener('click', () => saveEdit(post_id));
+  button.addEventListener('click', () => saveEdit(postId));
   document.querySelector(all_post_selector).append(button);
-  return document.querySelector(text_selector).focus();
+  return document.querySelector("#edit-textarea").focus();
 }
 
-// Publish edited post
+
+// Save edited post
 function saveEdit(post_id) {
   const text_selector = "#post-text-" + post_id;
+  t = document.querySelector("#edit-textarea").value;
+  console.log(t);
   const url = '/edit/' + post_id;
   fetch(url, {
     method: 'PUT',
     body: JSON.stringify({
-      text: document.querySelector(text_selector).innerHTML
+      text: t
     })
   })
   .then(response => {
@@ -309,6 +312,7 @@ function saveEdit(post_id) {
   // Prevent default submission
   return false; 
 }
+
 
 
 function postLike(postID, postIsLiked) {

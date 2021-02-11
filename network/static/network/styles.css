@@ -89,3 +89,14 @@
 .navbar-brand {
     font-size: 2.25rem;
 }
+
+.post-date {
+    font-style: italic;
+    font-size: 14px;
+}
+
+.text-post {
+    width: 100%;
+}
+
+
