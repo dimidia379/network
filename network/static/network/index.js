@@ -68,7 +68,6 @@ function pagination(area, pagen, numberOfPages) {
   next.className = "btn btn-primary";
   previous.className = "btn btn-primary";
   
-
   if (area == "all_posts") {
     previous.addEventListener("click", () => allPosts(pagen - 1));
     next.addEventListener("click", () => allPosts(pagen + 1));
@@ -112,6 +111,7 @@ function pagination(area, pagen, numberOfPages) {
           const count_likes = post["count_likes"];
           const likes = post["likes"];
           let appended_to_selector = '';
+
           if (area == "all_posts") {
             appended_to_selector = '#all-posts-view';
           } else if (area == "following") {
@@ -119,15 +119,15 @@ function pagination(area, pagen, numberOfPages) {
           } else {
             appended_to_selector = '#user-posts';
           }          
+
           composePost(post_id, user_id, author, text, timestamp, count_likes, likes, appended_to_selector);           
-      })   
-      
+      })         
       pagination(area, pageNum, number_of_pages);    
 });
 }
 
 
-// All posts
+// All posts view
 function allPosts(pagen) {
   // Show the all-posts-view and hide other views 
   document.querySelector('#all-posts-view').style.display = 'block';
@@ -286,11 +286,11 @@ function postEdit(postId, text) {
 
 
 // Save edited post
-function saveEdit(post_id) {
-  const text_selector = "#post-text-" + post_id;
+function saveEdit(postId) {
+  const text_selector = "#post-text-" + postId;
   t = document.querySelector("#edit-textarea").value;
   console.log(t);
-  const url = '/edit/' + post_id;
+  const url = '/edit/' + postId;
   fetch(url, {
     method: 'PUT',
     body: JSON.stringify({
@@ -314,7 +314,7 @@ function saveEdit(post_id) {
 }
 
 
-
+// Like or unlike post
 function postLike(postID, postIsLiked) {
   if (!document.querySelector('#profile-link')) {
     alert("Please log in to like posts.")
@@ -325,8 +325,6 @@ function postLike(postID, postIsLiked) {
     const counter = Number(document.querySelector(counterSelector).innerHTML);  
     const currentPage = document.querySelector("#pageNumber").getAttribute("currentPage");
     const currentArea = document.querySelector("#pageNumber").getAttribute("currentArea");
-    
-    console.log(currentPage);
 
     const url = `/like/${postID}`;
     fetch(url, {

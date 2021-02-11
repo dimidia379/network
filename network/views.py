@@ -210,8 +210,7 @@ def post_like(request, post_id):
         liker = request.user
         likers = post.likes.all()
         data = json.loads(request.body)
-        #liker = data["liker"]
-        #liker = User.objects.get(pk=liker)
+
         if not liker in likers:
             post.likes.add(data["liker"])
         else:
